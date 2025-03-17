@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Guest Management</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QR Code library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Chart.js for analytics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <!-- HTML5-QRCode for QR scanning -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.4/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #5d75fd;
+            --primary-hover: #6b21a8;
+            --secondary-color: #3b82f6;
+            --light-bg: #ffffff;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --success-bg: #e2f3ea;
+            --border-radius: 12px;
+            --text-color: #333;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-color);
+            padding-bottom: 50px;
+        }
+        
+        .app-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            color: white;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            margin-bottom: 20px;
+            border: none;
+            background-color: white;
+            color: var(--text-color);
+        }
+        
+        .success-card {
+            background-color: var(--success-bg);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 9999px;
+            padding: 10px 24px;
+            margin: 0 5px;
+            font-weight: 500;
+        }
+        
+        .nav-pills .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .form-control, .form-select {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            background-color: #ffffff;
+            color: var(--text-color);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .guest-id {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .badge {
+            padding: 6px 10px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            color: white;
+        }
+        
+        .badge-not-checked {
+            background-color: #6c757d;
+        }
+        
+        .badge-checked {
+            background-color: #10b981;
+        }
+        
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            margin: 24px 0;
+        }
+        
+        .download-btn {
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            border: 1px solid var(--secondary-color);
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            margin: 0 auto;
+            width: fit-content;
+            text-decoration: none;
+        }
+        
+        .download-btn:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+        
+        .stats-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stats-card h2 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+        
+        .stats-card p {
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+        
+        #qr-reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        #qr-reader__scan_region {
+            position: relative;
+        }
+        
+        #qr-reader__scan_region::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            z-index: 1;
+        }
+        
+        .event-info {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .event-info h5 {
+            margin-bottom: 0;
+            margin-left: 10px;
+        }
+        
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        
+        .search-container .form-control {
+            padding-left: 40px;
+        }
+        
+        .search-container i {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            color: #6c757d;
+        }
+        
+        .floating-action-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s;
+        }
+        
+        .floating-action-btn:hover {
+            background-color: var(--primary-hover);
+            transform: scale(1.1);
+        }
+        
+        .table th {
+            font-weight: 600;
+        }
+        
+        /* Table styling for light mode */
+        .table {
+            color: var(--text-color);
+        }
+        
+        .table-responsive {
+            color: var(--text-color);
+        }
+        
+        /* Text colors for light mode */
+        .text-muted {
+            color: #6c757d !important;
+        }
+        
+        /* Modal styling for light mode */
+        .modal-content {
+            background-color: white;
+            color: var(--text-color);
+        }
+        
+        /* Ensuring text visibility across different components */
+        h1, h2, h3, h4, h5, h6, p, label, th, td {
+            color: var(--text-color);
+        }
+        
+        /* Responsive additions */
+        @media (max-width: 768px) {
+            .card {
+                padding: 1rem;
+            }
+            
+            .stats-card {
+                margin-bottom: 1rem;
+            }
+            
+            .floating-action-btn {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .table-responsive {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Animation effects */
+        .card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Attendance chart */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        /* Modal customization */
+        .modal-content {
+            border-radius: var(--border-radius);
+            border: none;
+        }
+        
+        .modal-header {
+            border-bottom: none;
+            padding: 20px 20px 0 20px;
+        }
+        
+        .modal-footer {
+            border-top: none;
+            padding: 0 20px 20px 20px;
+        }
+        
+        /* Custom tooltip styling */
+        .custom-tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .custom-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .custom-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        /* QR Scanner Animation */
+        @keyframes scanline {
+            0% {
+                top: 0%;
+            }
+            50% {
+                top: 100%;
+            }
+            100% {
+                top: 0%;
+            }
+        }
+        
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: rgba(126, 34, 206, 0.8);
+            animation: scanline 2s linear infinite;
+            z-index: 2;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <i class="fas fa-ticket-alt fa-2x"></i>
+                </div>
+                <div class="col">
+                    <h1 class="fs-2 fw-bold text-white">Event Guest Management</h1>
+                    <p class="opacity-75 mb-0 text-white">Register guests and manage check-ins seamlessly</p>
+                </div>
+                <div class="col-auto d-none d-md-block">
+                    <div class="event-info bg-white bg-opacity-10 px-3 py-2 rounded-pill">
+                        <i class="fas fa-calendar-alt text-white"></i>
+                        <h5 id="event-date" class="ms-2 mb-0 text-white">
+                            Event Date: <span id="event-date-display"></span>
+                        </h5>
+                    </div>
+                </div>
+                
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Dashboard Summary -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-6 mb-3 mb-md-0">
+                <div class="card stats-card">
+                    <h2 id="total-registered">0</h2>
+                    <p>Registered</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3 mb-md-0">
+                <div class="card stats-card">
+                    <h2 id="total-checked-in">0</h2>
+                    <p>Checked In</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stats-card">
+                    <h2 id="total-expected">0</h2>
+                    <p>Expected Guests</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card stats-card">
+                    <h2 id="check-in-rate">0%</h2>
+                    <p>Check-in Rate</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navigation Tabs -->
+        <ul class="nav nav-pills mb-4 justify-content-center" id="guest-tabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="registration-tab" data-bs-toggle="tab" data-bs-target="#registration" type="button" role="tab">
+                    <i class="fas fa-user-plus me-1"></i> Registration
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="checkin-tab" data-bs-toggle="tab" data-bs-target="#checkin" type="button" role="tab">
+                    <i class="fas fa-check-circle me-1"></i> Check-in
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="guestlist-tab" data-bs-toggle="tab" data-bs-target="#guestlist" type="button" role="tab">
+                    <i class="fas fa-list me-1"></i> Guest List
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab">
+                    <i class="fas fa-chart-bar me-1"></i> Analytics
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Contents -->
+        <div class="tab-content" id="guest-tabs-content">
+            <!-- Registration Tab -->
+            <div class="tab-pane fade show active" id="registration" role="tabpanel">
+                <div class="card p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="fas fa-user-plus fa-lg text-primary me-2"></i>
+                        <h2 class="fs-4 fw-bold mb-0">Guest Registration</h2>
+                    </div>
+
+                    <form id="registration-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="guest-name">Primary Guest Name</label>
+                                    <input class="form-control" id="guest-name" type="text" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="guest-email">Email</label>
+                                    <input class="form-control" id="guest-email" type="email" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="guest-phone">Phone Number</label>
+                                    <input class="form-control" id="guest-phone" type="tel" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="additional-guests">Additional Guests</label>
+                                    <select class="form-select" id="additional-guests">
+                                        <option value="0">No additional guests</option>
+                                        <option value="1">1 additional guest</option>
+                                        <option value="2">2 additional guests</option>
+                                        <option value="3">3 additional guests</option>
+                                        <option value="4">4 additional guests</option>
+                                        <option value="5">5 additional guests</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="guest-company">Company/Organization (Optional)</label>
+                                    <input class="form-control" id="guest-company" type="text">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label" for="guest-dietary">Dietary Restrictions (Optional)</label>
+                                    <select class="form-select" id="guest-dietary">
+                                        <option value="none">None</option>
+                                        <option value="vegetarian">Vegetarian</option>
+                                        <option value="vegan">Vegan</option>
+                                        <option value="gluten-free">Gluten-Free</option>
+                                        <option value="dairy-free">Dairy-Free</option>
+                                        <option value="nut-free">Nut-Free</option>
+                                        <option value="other">Other (Please specify)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="dietary-notes-container" style="display: none;">
+                            <label class="form-label" for="guest-dietary-notes">Dietary Notes</label>
+                            <textarea class="form-control" id="guest-dietary-notes" rows="2"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label" for="guest-notes">Special Requests/Notes (Optional)</label>
+                            <textarea class="form-control" id="guest-notes" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input class="form-check-input" type="checkbox" id="marketing-consent">
+                            <label class="form-check-label" for="marketing-consent">
+                                I agree to receive future event invitations and marketing communications
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus me-2"></i> Register Guest
+                        </button>
+                    </form>
+
+                    <div id="registration-success" class="success-card mt-4" style="display: none;">
+                        <div class="d-flex justify-content-center mb-3">
+                            <div class="bg-success bg-opacity-25 rounded-circle p-3">
+                                <i class="fas fa-check-circle fa-3x text-success"></i>
+                            </div>
+                        </div>
+                        <h3 class="fs-4 fw-medium text-success mb-2">Registration Successful!</h3>
+                        <p class="mb-2">Your Guest ID is: <span id="guest-id" class="guest-id"></span></p>
+                        <p class="text-muted mb-4">Please scan the QR code at the event entrance</p>
+                        
+                        <div class="qr-container">
+                            <div id="qrcode"></div>
+                        </div>
+                        
+                        <div class="d-flex gap-2 justify-content-center mt-3">
+                            <button class="btn btn-primary" onclick="downloadQR()">
+                                <i class="fas fa-download me-2"></i> Download QR Code
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="emailQRCode()">
+                                <i class="fas fa-envelope me-2"></i> Email QR Code
+                            </button>
+                        </div>
+                        <button class="btn btn-link mt-3" onclick="resetRegistrationForm()">
+                            Register Another Guest
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Check-in Tab -->
+            <div class="tab-pane fade" id="checkin" role="tabpanel">
+                <div class="card p-4 mb-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="fas fa-check-circle fa-lg text-primary me-2"></i>
+                        <h2 class="fs-4 fw-bold mb-0">Guest Check-in</h2>
+                    </div>
+
+                    <ul class="nav nav-pills nav-fill mb-4">
+                        <li class="nav-item">
+                            <button id="btn-scan-qr" class="nav-link active" onclick="showQRScanner()">
+                                <i class="fas fa-qrcode me-2"></i> Scan QR Code
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button id="btn-manual-entry" class="nav-link" onclick="showManualEntry()">
+                                <i class="fas fa-keyboard me-2"></i> Manual Entry
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div id="qr-scanner-container">
+                        <div id="qr-reader"></div>
+                        <div class="text-center mt-3">
+                            <p class="text-muted">Position the QR code within the frame to scan</p>
+                        </div>
+                    </div>
+
+                    <div id="manual-entry-form" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label" for="guest-id-input">Enter Guest ID or Name</label>
+                            <input class="form-control" id="guest-id-input" type="text" placeholder="e.g., SMITH-001 or John Smith">
+                            <div class="form-text">You can enter a partial ID or name to search</div>
+                        </div>
+                        
+                        <button id="btn-checkin" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i> Find Guest
+                        </button>
+                    </div>
+
+                    <div id="guest-info" class="mt-4" style="display: none;">
+                        <div class="p-4 border rounded-3 bg-light">
+                            <div class="row align-items-center mb-3">
+                                <div class="col">
+                                    <h3 id="checkin-guest-name" class="fs-4 fw-bold mb-1">Guest Name</h3>
+                                    <p id="checkin-guest-details" class="text-muted mb-0">Registered with <span>0</span> additional guests</p>
+                                </div>
+                                <div class="col-auto">
+                                    <span class="badge bg-success">New Check-in</span>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Email:</strong> <span id="checkin-guest-email"></span></p>
+                                    <p class="mb-1"><strong>Phone:</strong> <span id="checkin-guest-phone"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Company:</strong> <span id="checkin-guest-company"></span></p>
+                                    <p class="mb-1"><strong>Dietary Needs:</strong> <span id="checkin-guest-dietary"></span></p>
+                                </div>
+                            </div>
+                            
+                            <div id="checkin-guest-notes-container" class="mb-3" style="display: none;">
+                                <p class="mb-1"><strong>Notes:</strong></p>
+                                <p id="checkin-guest-notes" class="mb-0 bg-white p-2 rounded"></p>
+                            </div>
+                            
+                            <hr class="my-3">
+                            
+                            <div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <i class="fas fa-users me-2 text-primary"></i>
+                                    <h4 class="fs-5 fw-medium mb-0">Verify Accompanying Guests</h4>
+                                </div>
+                                <p class="text-muted mb-3">This guest registered with <span id="registered-additional">0</span> additional guests</p>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label" for="actual-additional-guests">
+                                        Actual number of accompanying guests:
+                                    </label>
+                                    <select class="form-select" id="actual-additional-guests">
+                                        <option value="0">0 additional guests</option>
+                                        <option value="1">1 additional guest</option>
+                                        <option value="2">2 additional guests</option>
+                                        <option value="3">3 additional guests</option>
+                                        <option value="4">4 additional guests</option>
+                                        <option value="5">5 additional guests</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="d-flex gap-2">
+                                    <button id="btn-complete-checkin" class="btn btn-primary flex-grow-1">
+                                        <i class="fas fa-check-circle me-2"></i> Complete Check-in
+                                    </button>
+                                    <button id="btn-cancel-checkin" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <i class="fas fa-history fa-lg text-primary me-2"></i>
+                        <h2 class="fs-4 fw-bold mb-0">Recent Check-ins</h2>
+                    </div>
+                    <div id="recent-checkins" class="text-muted fst-italic">
+                        No recent check-ins to display
+                    </div>
+                </div>
+            </div>
+
+            <!-- Guest List Tab -->
+            <div class="tab-pane fade" id="guestlist" role="tabpanel">
+                <div class="card p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-list fa-lg text-primary me-2"></i>
+                            <h2 class="fs-4 fw-bold mb-0">Guest List</h2>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary me-2" onclick="exportGuestList()">
+                                <i class="fas fa-file-export me-1"></i> Export
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="printGuestList()">
+                                <i class="fas fa-print me-1"></i> Print
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="search-container mb-3">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" id="guest-search" placeholder="Search guests...">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Guest ID</th>
+                                    <th>Primary Guest</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Additional</th>
+                                    <th>Status</th>
+                                    <th>Verified</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="guest-list-table">
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        No registered guests to display
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div class="tab-pane fade" id="analytics" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-6 mb-4">
+                        <div class="card p-4">
+                            <div class="d-flex align-items-center mb-4">
+                                <i class="fas fa-chart-line fa-lg text-primary me-2"></i>
+                                <h2 class="fs-4 fw-bold mb-0">Check-in Progress</h2>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="checkin-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 mb-4">
+                        <div class="card p-4">
+                            <div class="d-flex align-items-center mb-4">
+                                <i class="fas fa-chart-pie fa-lg text-primary me-2"></i>
+                                <h2 class="fs-4 fw-bold mb-0">Guest Breakdown</h2>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="guest-breakdown-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card p-4">
+                            <div class="d-flex align-items-center mb-4">
+                                <i class="fas fa-clipboard-list fa-lg text-primary me-2"></i>
+                                <h2 class="fs-4 fw-bold mb-0">Registration Summary</h2>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Count</th>
+                                            <th>Percentage</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="analytics-table">
+                                        <tr>
+                                            <td>Total Registered</td>
+                                            <td id="analytics-registered">0</td>
+                                            <td>100%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Checked In</td>
+                                            <td id="analytics-checked-in">0</td>
+                                            <td id="analytics-checked-in-percent">0%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>No Shows</td>
+                                            <td id="analytics-no-shows">0</td>
+                                            <td id="analytics-no-shows-percent">0%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>With Additional Guests</td>
+                                            <td id="analytics-with-additional">0</td>
+                                            <td id="analytics-with-additional-percent">0%</td>
+                                        </tr>
+                                        <tr>
+                                            <td>With Dietary Restrictions</td>
+                                            <td id="analytics-dietary">0</td>
+                                            <td id="analytics-dietary-percent">0%</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Event Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="event-name-input">Event Name</label>
+                        <input type="text" class="form-control" id="event-name-input" placeholder="Annual Conference 2025">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="event-date-input">Event Date</label>
+                        <input type="date" class="form-control" id="event-date-input">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="event-location-input">Event Location</label>
+                        <input type="text" class="form-control" id="event-location-input" placeholder="Grand Hotel, New York">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="event-capacity-input">Maximum Capacity</label>
+                        <input type="number" class="form-control" id="event-capacity-input" placeholder="100">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEventSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guest Details Modal -->
+    <div class="modal fade" id="guestDetailsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Guest Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Guest ID:</strong> <span id="modal-guest-id"></span></p>
+                            <p><strong>Name:</strong> <span id="modal-guest-name"></span></p>
+                            <p><strong>Email:</strong> <span id="modal-guest-email"></span></p>
+                            <p><strong>Phone:</strong> <span id="modal-guest-phone"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Additional Guests:</strong> <span id="modal-guest-additional"></span></p>
+                            <p><strong>Company:</strong> <span id="modal-guest-company"></span></p>
+                            <p><strong>Dietary Needs:</strong> <span id="modal-guest-dietary"></span></p>
+                            <p><strong>Registration Date:</strong> <span id="modal-guest-date"></span></p>
+                        </div>
+                    </div>
+                    <div class="mb-3" id="modal-guest-notes-container">
+                        <p><strong>Notes:</strong></p>
+                        <p id="modal-guest-notes" class="p-2 bg-light rounded"></p>
+                    </div>
+                    <div class="mb-3">
+                        <p><strong>Status:</strong> <span id="modal-guest-status"></span></p>
+                        <p><strong>Check-in Time:</strong> <span id="modal-guest-checkin-time"></span></p>
+                        <p><strong>Verified Guest Count:</strong> <span id="modal-guest-verified"></span></p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="modal-checkin-btn">Check In</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <button class="floating-action-btn" data-bs-toggle="modal" data-bs-target="#settingsModal">
+        <i class="fas fa-cog"></i>
+    </button>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Google Apps Script deployment URL (replace with your own URL)
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8nuLNTofJazBP-IgWaqNvb4Wi-dnubx_SgeQeBRSiq4wJur0r0-9kuaCpW8n0iU-syQ/exec";
+        
+        // Initialize state variables
+        let currentTab = 'registration';
+        let guestList = [];
+        let recentCheckins = [];
+        let html5QrCode;
+        let isLocalStorageMode = false; // Set to false to use Google Sheets backend
+        let eventSettings = {
+            name: "Annual Conference 2025",
+            date: new Date().toISOString().split('T')[0],
+            location: "Grand Hotel, New York",
+            capacity: 100
+        };
+        
+        // Charts
+        let checkinChart;
+        let breakdownChart;
+
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize event settings
+            loadEventSettings();
+            
+            // Set event date in header
+            updateEventDateDisplay();
+            
+            // Add event listeners
+            document.getElementById('registration-form').addEventListener('submit', registerGuest);
+            document.getElementById('btn-checkin').addEventListener('click', searchGuest);
+            document.getElementById('btn-complete-checkin').addEventListener('click', completeCheckin);
+            document.getElementById('btn-cancel-checkin').addEventListener('click', cancelCheckin);
+            document.getElementById('guest-dietary').addEventListener('change', toggleDietaryNotes);
+            document.getElementById('guest-search').addEventListener('input', filterGuestList);
+            
+            // Setup QR code scanner
+            setupQRScanner();
+            
+            // Load guest list
+            loadGuestList();
+            
+            // Add to your existing DOMContentLoaded event listener
+const guestIdInput = document.getElementById('guest-id-input');
+if (guestIdInput) {
+    guestIdInput.addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+        const errorMsg = document.getElementById('search-error-message');
+        if (errorMsg) {
+            errorMsg.remove();
+        }
+        
+        // Also remove no results message when typing
+        const noResults = document.getElementById('no-results-message');
+        if (noResults) {
+            noResults.remove();
+        }
+    });
+    
+    // Allow pressing Enter to search
+    guestIdInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('btn-checkin').click();
+        }
+    });
+}
+
+            // Initialize Bootstrap tabs
+            const triggerTabList = document.querySelectorAll('#guest-tabs button');
+            triggerTabList.forEach(triggerEl => {
+                triggerEl.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const tabTarget = document.querySelector(this.getAttribute('data-bs-target'));
+                    
+                    // If switching to analytics tab, update charts
+                    if (this.getAttribute('data-bs-target') === '#analytics') {
+                        setTimeout(updateAnalyticsCharts, 100);
+                    }
+                });
+            });
+        });
+
+        // Load event settings
+        function loadEventSettings() {
+            if (isLocalStorageMode) {
+                const savedSettings = localStorage.getItem('eventSettings');
+                if (savedSettings) {
+                    try {
+                        eventSettings = JSON.parse(savedSettings);
+                        
+                        // Update inputs in the settings modal
+                        document.getElementById('event-name-input').value = eventSettings.name || '';
+                        document.getElementById('event-date-input').value = eventSettings.date || '';
+                        document.getElementById('event-location-input').value = eventSettings.location || '';
+                        document.getElementById('event-capacity-input').value = eventSettings.capacity || '';
+                        
+                        // Update display
+                        updateEventDateDisplay();
+                    } catch (e) {
+                        console.error('Error loading event settings:', e);
+                    }
+                }
+            } else {
+                fetch(SCRIPT_URL + '?action=getEventSettings')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            eventSettings = data.settings;
+                            
+                            // Update inputs in the settings modal
+                            document.getElementById('event-name-input').value = eventSettings.eventName || '';
+                            document.getElementById('event-date-input').value = eventSettings.eventDate || '';
+                            document.getElementById('event-location-input').value = eventSettings.eventLocation || '';
+                            document.getElementById('event-capacity-input').value = eventSettings.eventCapacity || '';
+                            
+                            // Update display
+                            updateEventDateDisplay();
+                        } else {
+                            console.error('Error loading event settings:', data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }
+        }
+
+        // Save event settings
+        function saveEventSettings() {
+            const settings = {
+                eventName: document.getElementById('event-name-input').value,
+                eventDate: document.getElementById('event-date-input').value,
+                eventLocation: document.getElementById('event-location-input').value,
+                eventCapacity: document.getElementById('event-capacity-input').value
+            };
+            
+            // Show saving indicator
+            document.querySelector('#settingsModal .modal-footer').innerHTML = '<span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span> Saving...';
+            
+            if (isLocalStorageMode) {
+                eventSettings = settings;
+                localStorage.setItem('eventSettings', JSON.stringify(eventSettings));
+                updateEventDateDisplay();
+                
+                // Close the modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+                modal.hide();
+                
+                // Show success toast
+                alert('Event settings saved successfully!');
+            } else {
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'saveEventSettings',
+                        settings: settings
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        eventSettings = settings;
+                        updateEventDateDisplay();
+                        
+                        // Close the modal
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+                        modal.hide();
+                        
+                        // Show success toast
+                        alert('Event settings saved successfully!');
+                    } else {
+                        alert('Error saving settings: ' + data.message);
+                        
+                        // Reset modal footer
+                        document.querySelector('#settingsModal .modal-footer').innerHTML = `
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="saveEventSettings()">Save Settings</button>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error connecting to server. Please try again.');
+                    
+                    // Reset modal footer
+                    document.querySelector('#settingsModal .modal-footer').innerHTML = `
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="saveEventSettings()">Save Settings</button>
+                    `;
+                });
+            }
+        }
+
+        // Update event date display in header
+        function updateEventDateDisplay() {
+            const dateElement = document.getElementById('event-date-display');
+            if (dateElement) {
+                const dateValue = isLocalStorageMode ? eventSettings.date : eventSettings.eventDate;
+                if (dateValue) {
+                    const date = new Date(dateValue);
+                    dateElement.textContent = date.toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                }
+            }
+        }
+
+        // Toggle dietary notes field based on selection
+        function toggleDietaryNotes() {
+            const dietarySelect = document.getElementById('guest-dietary');
+            const notesContainer = document.getElementById('dietary-notes-container');
+            
+            if (dietarySelect.value === 'other') {
+                notesContainer.style.display = 'block';
+            } else {
+                notesContainer.style.display = 'none';
+            }
+        }
+
+        // Setup QR code scanner
+        function setupQRScanner() {
+            html5QrCode = new Html5Qrcode("qr-reader");
+        }
+
+        // Show QR scanner
+        // Replace the setupQRScanner function
+function setupQRScanner() {
+    // Initialize the HTML5 QR code scanner with more configuration options
+    html5QrCode = new Html5Qrcode("qr-reader");
+}
+
+// Replace the showQRScanner function
+function showQRScanner() {
+    document.getElementById('btn-scan-qr').classList.add('active');
+    document.getElementById('btn-manual-entry').classList.remove('active');
+    document.getElementById('qr-scanner-container').style.display = 'block';
+    document.getElementById('manual-entry-form').style.display = 'none';
+    document.getElementById('guest-info').style.display = 'none';
+    
+    // Only start scanner if not already running
+    if (html5QrCode && !html5QrCode.isScanning) {
+        // Enhanced configuration with better error handling and format support
+        const config = { 
+            fps: 10, 
+            qrbox: { width: 250, height: 250 },
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.QR_CODE,
+                Html5QrcodeSupportedFormats.AZTEC,
+                Html5QrcodeSupportedFormats.DATA_MATRIX,
+                Html5QrcodeSupportedFormats.PDF_417
+            ],
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+            },
+            rememberLastUsedCamera: true
+        };
+        
+        html5QrCode.start(
+            { facingMode: "environment" }, 
+            config, 
+            onScanSuccess, 
+            onScanFailure
+        ).catch(err => {
+            console.error("Error starting QR scanner:", err);
+            
+            // Display user-friendly error message
+            const container = document.getElementById('qr-scanner-container');
+            container.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Camera Error:</strong> Could not access camera for QR scanning.
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-warning me-2" onclick="requestCameraPermission()">
+                            <i class="fas fa-camera me-1"></i> Try Again
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="showManualEntry()">
+                            <i class="fas fa-keyboard me-1"></i> Use Manual Entry
+                        </button>
+                    </div>
+                </div>
+                <div id="qr-reader"></div>
+            `;
+        });
+        
+        // Add scan line animation for visual feedback
+        const scanRegion = document.getElementById('qr-reader__scan_region');
+        if (scanRegion) {
+            const scanLine = document.createElement('div');
+            scanLine.className = 'scan-line';
+            scanRegion.appendChild(scanLine);
+        }
+    }
+}
+
+
+
+// Function to request camera permission explicitly
+function requestCameraPermission() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            // Stop the stream immediately, we just needed the permission
+            stream.getTracks().forEach(track => track.stop());
+            
+            // Reinitialize scanner
+            html5QrCode = new Html5Qrcode("qr-reader");
+            showQRScanner();
+        })
+        .catch(err => {
+            console.error("Camera permission denied:", err);
+            alert("Camera access was denied. Please check your browser settings and allow camera access.");
+            showManualEntry();
+        });
+}
+        // QR scan success callback
+        // Enhanced version of onScanSuccess
+function onScanSuccess(decodedText, decodedResult) {
+    console.log("QR Code scanned successfully:", decodedText);
+    
+    // Stop scanner
+    if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+            console.log("QR scanner stopped");
+        }).catch(err => {
+            console.error("Error stopping QR scanner:", err);
+        });
+    }
+    
+    // Find the guest by ID
+    const guest = guestList.find(g => g.id === decodedText);
+    
+    if (guest) {
+        console.log("Guest found:", guest.name);
+        
+        // Show feedback that QR code was recognized
+        document.getElementById('qr-scanner-container').innerHTML = `
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                QR Code recognized: <strong>${decodedText}</strong>
+            </div>
+        `;
+        
+        // Short delay to show the recognition message before proceeding
+        setTimeout(() => {
+            // Display guest information for check-in
+            showGuestInfo(guest);
+        }, 800);
+    } else {
+        console.error("Guest not found for ID:", decodedText);
+        
+        // Show error message
+        document.getElementById('qr-scanner-container').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                <strong>Guest Not Found:</strong> No guest record exists for ID: ${decodedText}
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-danger me-2" onclick="showQRScanner()">
+                        <i class="fas fa-redo me-1"></i> Try Again
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="showManualEntry()">
+                        <i class="fas fa-keyboard me-1"></i> Switch to Manual Entry
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Enhanced version of onScanFailure with better error handling
+function onScanFailure(error) {
+    // Don't log the common "QR code not found" error to avoid console spam
+    if (error !== "QR code not found" && error !== "No MultiFormat Readers were able to detect the code.") {
+        console.error("QR Scan error:", error);
+        
+        // If we get persistent errors about formats, try to use a different scanning approach
+        if (error.includes("No MultiFormat Readers were able to detect the code")) {
+            // Only show this message once to avoid spam
+            const errorMsgElement = document.getElementById('format-error-message');
+            if (!errorMsgElement) {
+                const container = document.getElementById('qr-scanner-container');
+                const msgDiv = document.createElement('div');
+                msgDiv.id = 'format-error-message';
+                msgDiv.className = 'alert alert-info mt-2';
+                msgDiv.innerHTML = `
+                    <small>
+                        <i class="fas fa-info-circle me-1"></i>
+                        Having trouble scanning? Make sure the QR code is well-lit and try holding the camera steady.
+                    </small>
+                `;
+                container.appendChild(msgDiv);
+                
+                // Remove the message after 5 seconds
+                setTimeout(() => {
+                    if (msgDiv.parentNode) {
+                        msgDiv.parentNode.removeChild(msgDiv);
+                    }
+                }, 5000);
+            }
+        }
+    }
+}
+
+        // Show manual entry form
+        function showManualEntry() {
+            // Stop scanner if running
+            if (html5QrCode.isScanning) {
+                html5QrCode.stop();
+            }
+            
+            document.getElementById('btn-scan-qr').classList.remove('active');
+            document.getElementById('btn-manual-entry').classList.add('active');
+            document.getElementById('qr-scanner-container').style.display = 'none';
+            document.getElementById('manual-entry-form').style.display = 'block';
+            document.getElementById('guest-info').style.display = 'none';
+        }
+
+        // Register a new guest
+        function registerGuest(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const name = document.getElementById('guest-name').value;
+            const email = document.getElementById('guest-email').value;
+            const phone = document.getElementById('guest-phone').value;
+            const additionalGuests = document.getElementById('additional-guests').value;
+            const company = document.getElementById('guest-company').value || '';
+            const dietary = document.getElementById('guest-dietary').value;
+            const dietaryNotes = document.getElementById('guest-dietary-notes').value || '';
+            const notes = document.getElementById('guest-notes').value || '';
+            const marketingConsent = document.getElementById('marketing-consent').checked;
+            
+            // Generate unique guest ID
+            const namePrefix = name.trim().split(' ')[0].toUpperCase();
+            const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const guestID = `${namePrefix}-${randomNum}`;
+            
+            // Format current date
+            const now = new Date();
+            const formattedDate = now.toLocaleString();
+            
+            // Guest data object
+            const guestData = {
+                id: guestID,
+                name: name,
+                email: email,
+                phone: phone,
+                additionalGuests: additionalGuests,
+                company: company,
+                dietary: dietary,
+                dietaryNotes: dietaryNotes,
+                notes: notes,
+                marketingConsent: marketingConsent,
+                registrationDate: formattedDate,
+                status: 'Not Checked In',
+                checkInTime: '',
+                verifiedCount: 'Not checked in'
+            };
+            
+            if (isLocalStorageMode) {
+                // Store in localStorage
+                guestList.push(guestData);
+                saveGuestList();
+                showRegistrationSuccess(guestID);
+            } else {
+                // Show loading indicator
+                document.getElementById('registration-form').innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Registering guest...</p></div>';
+                
+                // Send data to server
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'registerGuest',
+                        guest: guestData
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Add to local guest list
+                        guestList.push(guestData);
+                        showRegistrationSuccess(guestID);
+                    } else {
+                        alert('Error registering guest: ' + data.message);
+                        resetRegistrationForm();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error connecting to server. Please try again.');
+                    resetRegistrationForm();
+                });
+            }
+        }
+
+        // Show registration success message
+        function showRegistrationSuccess(guestID) {
+            // Update guest list table
+            updateGuestListTable();
+            updateStatistics();
+            
+            // Show success message
+            document.getElementById('guest-id').textContent = guestID;
+            
+            // Generate QR code
+            generateQRCode(guestID);
+            
+            // Show success card
+            document.getElementById('registration-form').style.display = 'none';
+            document.getElementById('registration-success').style.display = 'block';
+        }
+
+        // Reset registration form
+        function resetRegistrationForm() {
+            // Recreate the registration form HTML if needed
+            if (!document.getElementById('registration-form').querySelector('input')) {
+                document.getElementById('registration-form').innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="guest-name">Primary Guest Name</label>
+                                <input class="form-control" id="guest-name" type="text" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="guest-email">Email</label>
+                                <input class="form-control" id="guest-email" type="email" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="guest-phone">Phone Number</label>
+                                <input class="form-control" id="guest-phone" type="tel" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="additional-guests">Additional Guests</label>
+                                <select class="form-select" id="additional-guests">
+                                    <option value="0">No additional guests</option>
+                                    <option value="1">1 additional guest</option>
+                                    <option value="2">2 additional guests</option>
+                                    <option value="3">3 additional guests</option>
+                                    <option value="4">4 additional guests</option>
+                                    <option value="5">5 additional guests</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="guest-company">Company/Organization (Optional)</label>
+                                <input class="form-control" id="guest-company" type="text">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="guest-dietary">Dietary Restrictions (Optional)</label>
+                                <select class="form-select" id="guest-dietary">
+                                    <option value="none">None</option>
+                                    <option value="vegetarian">Vegetarian</option>
+                                    <option value="vegan">Vegan</option>
+                                    <option value="gluten-free">Gluten-Free</option>
+                                    <option value="dairy-free">Dairy-Free</option>
+                                    <option value="nut-free">Nut-Free</option>
+                                    <option value="other">Other (Please specify)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="dietary-notes-container" style="display: none;">
+                        <label class="form-label" for="guest-dietary-notes">Dietary Notes</label>
+                        <textarea class="form-control" id="guest-dietary-notes" rows="2"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="guest-notes">Special Requests/Notes (Optional)</label>
+                        <textarea class="form-control" id="guest-notes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input class="form-check-input" type="checkbox" id="marketing-consent">
+                        <label class="form-check-label" for="marketing-consent">
+                            I agree to receive future event invitations and marketing communications
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-user-plus me-2"></i> Register Guest
+                    </button>
+                `;
+                
+                // Add event listener to the form
+                document.getElementById('registration-form').addEventListener('submit', registerGuest);
+                
+                // Add event listener to the dietary select
+                document.getElementById('guest-dietary').addEventListener('change', toggleDietaryNotes);
+            } else {
+                // Just reset the form
+                document.getElementById('registration-form').reset();
+            }
+            
+            // Show form and hide success
+            document.getElementById('registration-form').style.display = 'block';
+            document.getElementById('registration-success').style.display = 'none';
+        }
+
+        // Generate QR code
+        function generateQRCode(guestID) {
+            // Clear previous QR code
+            document.getElementById('qrcode').innerHTML = '';
+            
+            // Generate new QR code
+            new QRCode(document.getElementById('qrcode'), {
+                text: guestID,
+                width: 200,
+                height: 200,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // Download QR code as image
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            const guestID = document.getElementById('guest-id').textContent;
+            const link = document.createElement('a');
+            
+            link.download = `QRCode-${guestID}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // Email QR code
+        function emailQRCode() {
+            const guestID = document.getElementById('guest-id').textContent;
+            const guest = guestList.find(g => g.id === guestID);
+            
+            if (guest && guest.email) {
+                // In a real implementation, you'd send this to your server
+                alert(`QR code would be emailed to ${guest.email} (not implemented in demo)`);
+            } else {
+                alert('Unable to email QR code: guest email not found');
+            }
+        }
+
+        // Search for a guest by ID or name
+       // Replace the searchGuest function with this enhanced version
+function searchGuest() {
+    const searchValue = document.getElementById('guest-id-input').value.trim();
+    
+    if (!searchValue) {
+        // Show validation error
+        document.getElementById('guest-id-input').classList.add('is-invalid');
+        
+        // Add error message if it doesn't exist
+        if (!document.getElementById('search-error-message')) {
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'search-error-message';
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = 'Please enter a Guest ID or Name';
+            document.getElementById('guest-id-input').parentNode.appendChild(errorDiv);
+        }
+        return;
+    }
+    
+    // Remove any validation styling
+    document.getElementById('guest-id-input').classList.remove('is-invalid');
+    
+    // Show loading indicator
+    const searchButton = document.getElementById('btn-checkin');
+    const originalButtonText = searchButton.innerHTML;
+    searchButton.disabled = true;
+    searchButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...';
+    
+    // Search in local guest list - make this more flexible with partial matching
+    const searchLower = searchValue.toLowerCase();
+    
+    // Try exact ID match first
+    let guest = guestList.find(g => g.id === searchValue);
+    
+    // If no exact match, try partial matching
+    if (!guest) {
+        guest = guestList.find(g => 
+            g.id.toLowerCase().includes(searchLower) || 
+            g.name.toLowerCase().includes(searchLower) ||
+            g.email.toLowerCase().includes(searchLower) ||
+            g.phone.includes(searchValue)
+        );
+    }
+    
+    // Short delay to show loading state (for better UX)
+    setTimeout(() => {
+        // Reset button
+        searchButton.disabled = false;
+        searchButton.innerHTML = originalButtonText;
+        
+        if (guest) {
+            console.log("Guest found via manual entry:", guest.name);
+            showGuestInfo(guest);
+        } else {
+            // Show error with suggestions
+            const noResultsDiv = document.createElement('div');
+            noResultsDiv.className = 'alert alert-warning mt-3';
+            noResultsDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>No guest found</strong> matching "${searchValue}"
+                <hr>
+                <small>
+                    <ul class="mb-0">
+                        <li>Check for typos in the name or ID</li>
+                        <li>Try using just the last name</li>
+                        <li>Try using just the guest ID without any extra characters</li>
+                    </ul>
+                </small>
+            `;
+            
+            // Remove any existing error message
+            const existingError = document.getElementById('no-results-message');
+            if (existingError) {
+                existingError.remove();
+            }
+            
+            // Add new error message
+            noResultsDiv.id = 'no-results-message';
+            document.getElementById('manual-entry-form').appendChild(noResultsDiv);
+        }
+    }, 500);
+}
+
+        function showGuestInfo(guest) {
+    // Make sure the guest object exists
+    if (!guest) {
+        console.error("Cannot show info for undefined guest");
+        alert("Error: Guest information could not be displayed");
+        return;
+    }
+    
+    console.log("Displaying info for guest:", guest.name);
+    
+    // Stop scanner if running
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().catch(err => console.error("Error stopping scanner:", err));
+    }
+    
+    // Update guest info fields
+    document.getElementById('checkin-guest-name').textContent = guest.name;
+    document.getElementById('checkin-guest-details').innerHTML = `Registered with <span>${guest.additionalGuests}</span> additional guests`;
+    document.getElementById('registered-additional').textContent = guest.additionalGuests;
+    document.getElementById('actual-additional-guests').value = guest.additionalGuests;
+    
+    // Additional guest details
+    document.getElementById('checkin-guest-email').textContent = guest.email || 'N/A';
+    document.getElementById('checkin-guest-phone').textContent = guest.phone || 'N/A';
+    document.getElementById('checkin-guest-company').textContent = guest.company || 'N/A';
+    document.getElementById('checkin-guest-dietary').textContent = guest.dietary === 'none' ? 'None' : guest.dietary;
+    
+    // Show notes if available
+    if (guest.notes) {
+        document.getElementById('checkin-guest-notes').textContent = guest.notes;
+        document.getElementById('checkin-guest-notes-container').style.display = 'block';
+    } else {
+        document.getElementById('checkin-guest-notes-container').style.display = 'none';
+    }
+    
+    // Don't allow check-in if already checked in
+    const checkInButton = document.getElementById('btn-complete-checkin');
+    if (guest.status === 'Checked In') {
+        checkInButton.disabled = true;
+        checkInButton.innerHTML = '<i class="fas fa-check-circle me-2"></i> Already Checked In';
+    } else {
+        checkInButton.disabled = false;
+        checkInButton.innerHTML = '<i class="fas fa-check-circle me-2"></i> Complete Check-in';
+    }
+    
+    // Make sure all containers are properly displayed/hidden
+    document.getElementById('qr-scanner-container').style.display = 'none';
+    document.getElementById('manual-entry-form').style.display = 'none';
+    document.getElementById('guest-info').style.display = 'block';
+    
+    // Store current guest ID for check-in
+    document.getElementById('guest-info').setAttribute('data-guest-id', guest.id);
+    
+    // Force the browser to repaint - helps with display issues
+    setTimeout(() => {
+        window.scrollTo(0, document.getElementById('guest-info').offsetTop - 100);
+    }, 100);
+}
+
+        // Complete guest check-in
+        function completeCheckin() {
+            const guestId = document.getElementById('guest-info').getAttribute('data-guest-id');
+            const actualGuests = document.getElementById('actual-additional-guests').value;
+            
+            // Find guest in local list
+            const guestIndex = guestList.findIndex(g => g.id === guestId);
+            
+            if (guestIndex === -1) {
+                alert('Guest not found. Please try again.');
+                return;
+            }
+            
+            // Format current date
+            const now = new Date();
+            const formattedTime = now.toLocaleString();
+            
+            // Show loading indicator
+            document.getElementById('btn-complete-checkin').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            document.getElementById('btn-complete-checkin').disabled = true;
+            document.getElementById('btn-cancel-checkin').disabled = true;
+            
+            if (isLocalStorageMode) {
+                // Update guest data locally
+                guestList[guestIndex].status = 'Checked In';
+                guestList[guestIndex].checkInTime = formattedTime;
+                guestList[guestIndex].verifiedCount = actualGuests;
+                
+                // Save to localStorage
+                saveGuestList();
+                processCheckinSuccess(guestIndex);
+            } else {
+                // Send to server - simplified fetch approach
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'checkInGuest',
+                        guestId: guestId,
+                        actualGuests: actualGuests
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Update local data
+                        guestList[guestIndex].status = 'Checked In';
+                        guestList[guestIndex].checkInTime = formattedTime;
+                        guestList[guestIndex].verifiedCount = actualGuests;
+                        
+                        processCheckinSuccess(guestIndex);
+                    } else {
+                        alert('Error checking in guest: ' + data.message);
+                        
+                        // Reset buttons
+                        document.getElementById('btn-complete-checkin').innerHTML = '<i class="fas fa-check-circle me-2"></i> Complete Check-in';
+                        document.getElementById('btn-complete-checkin').disabled = false;
+                        document.getElementById('btn-cancel-checkin').disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error connecting to server. Please try again.');
+                    
+                    // Reset buttons
+                    document.getElementById('btn-complete-checkin').innerHTML = '<i class="fas fa-check-circle me-2"></i> Complete Check-in';
+                    document.getElementById('btn-complete-checkin').disabled = false;
+                    document.getElementById('btn-cancel-checkin').disabled = false;
+                });
+            }
+        }
+
+        // Process check-in success
+        function processCheckinSuccess(guestIndex) {
+            // Add to recent check-ins
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            recentCheckins.unshift({
+                id: guestList[guestIndex].id,
+                name: guestList[guestIndex].name,
+                time: timeString,
+                additionalGuests: guestList[guestIndex].verifiedCount
+            });
+            
+            // Limit recent check-ins to 5
+            if (recentCheckins.length > 5) {
+                recentCheckins.pop();
+            }
+            
+            // Save recent check-ins to localStorage
+            localStorage.setItem('recentCheckins', JSON.stringify(recentCheckins));
+            
+            // Update displays
+            updateGuestListTable();
+            updateRecentCheckins();
+            updateStatistics();
+            
+            // Reset check-in form
+            resetCheckinForm();
+            
+            // Show success message
+            const toastHTML = `
+                <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+                    <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="toast-header bg-success text-white">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong class="me-auto">Success</strong>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                        <div class="toast-body">
+                            ${guestList[guestIndex].name} has been checked in successfully!
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add toast to page
+            const toastContainer = document.createElement('div');
+            toastContainer.innerHTML = toastHTML;
+            document.body.appendChild(toastContainer);
+            
+            // Remove toast after 3 seconds
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 3000);
+        }
+
+        // Cancel guest check-in
+        function cancelCheckin() {
+            resetCheckinForm();
+        }
+
+        // Reset check-in form
+        function resetCheckinForm() {
+            document.getElementById('guest-id-input').value = '';
+            document.getElementById('guest-info').style.display = 'none';
+            
+            // Show buttons based on active state
+            if (document.getElementById('btn-scan-qr').classList.contains('active')) {
+                showQRScanner();
+            } else {
+                showManualEntry();
+            }
+        }
+
+        // Load guest list
+        function loadGuestList() {
+            if (isLocalStorageMode) {
+                // Load from localStorage
+                const storedList = localStorage.getItem('guestList');
+                if (storedList) {
+                    try {
+                        guestList = JSON.parse(storedList);
+                        updateGuestListTable();
+                        updateStatistics();
+                    } catch (e) {
+                        console.error('Error parsing stored guest list:', e);
+                    }
+                }
+                
+                // Load recent check-ins
+                const storedCheckins = localStorage.getItem('recentCheckins');
+                if (storedCheckins) {
+                    try {
+                        recentCheckins = JSON.parse(storedCheckins);
+                        updateRecentCheckins();
+                    } catch (e) {
+                        console.error('Error parsing stored check-ins:', e);
+                    }
+                }
+            } else {
+                // Show loading indicator
+                document.getElementById('guest-list-table').innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status"></div>
+                            <p class="mt-2">Loading guest list...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                // Simplified fetch to GET guest list
+                fetch(SCRIPT_URL + '?action=getGuestList')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            guestList = data.guests;
+                            updateGuestListTable();
+                            updateStatistics();
+                            
+                            // Also load event settings
+                            loadEventSettings();
+                        } else {
+                            console.error('Error loading guest list:', data.message);
+                            document.getElementById('guest-list-table').innerHTML = `
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-danger">
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                        Error loading guest list
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        document.getElementById('guest-list-table').innerHTML = `
+                            <tr>
+                                <td colspan="8" class="text-center py-4 text-danger">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    Error connecting to server
+                                </td>
+                            </tr>
+                        `;
+                    });
+            }
+        }
+
+        // Save guest list to localStorage
+        function saveGuestList() {
+            localStorage.setItem('guestList', JSON.stringify(guestList));
+        }
+
+        // Update guest list table
+        function updateGuestListTable() {
+            const tableBody = document.getElementById('guest-list-table');
+            
+            if (guestList.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            No registered guests to display
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            guestList.forEach(guest => {
+                html += `
+                    <tr data-guest-id="${guest.id}">
+                        <td>${guest.id}</td>
+                        <td>${guest.name}</td>
+                        <td>${guest.email}</td>
+                        <td>${guest.phone}</td>
+                        <td>+${guest.additionalGuests}</td>
+                        <td>
+                            <span class="badge ${guest.status === 'Checked In' ? 'bg-success' : 'bg-secondary'}">
+                                ${guest.status}
+                            </span>
+                        </td>
+                        <td>${guest.verifiedCount}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="viewGuestDetails('${guest.id}')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteGuest('${guest.id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = html;
+        }
+
+        // View guest details
+        function viewGuestDetails(guestId) {
+            const guest = guestList.find(g => g.id === guestId);
+            
+            if (!guest) {
+                alert('Guest not found');
+                return;
+            }
+            
+            // Populate modal fields
+            document.getElementById('modal-guest-id').textContent = guest.id;
+            document.getElementById('modal-guest-name').textContent = guest.name;
+            document.getElementById('modal-guest-email').textContent = guest.email;
+            document.getElementById('modal-guest-phone').textContent = guest.phone;
+            document.getElementById('modal-guest-additional').textContent = guest.additionalGuests;
+            document.getElementById('modal-guest-company').textContent = guest.company || 'N/A';
+            document.getElementById('modal-guest-dietary').textContent = guest.dietary === 'none' ? 'None' : guest.dietary;
+            document.getElementById('modal-guest-date').textContent = guest.registrationDate;
+            
+            // Notes
+            if (guest.notes) {
+                document.getElementById('modal-guest-notes').textContent = guest.notes;
+                document.getElementById('modal-guest-notes-container').style.display = 'block';
+            } else {
+                document.getElementById('modal-guest-notes-container').style.display = 'none';
+            }
+            
+            // Status
+            document.getElementById('modal-guest-status').textContent = guest.status;
+            document.getElementById('modal-guest-checkin-time').textContent = guest.checkInTime || 'Not checked in';
+            document.getElementById('modal-guest-verified').textContent = guest.verifiedCount;
+            
+            // Check-in button
+            const checkinBtn = document.getElementById('modal-checkin-btn');
+            if (guest.status === 'Checked In') {
+                checkinBtn.disabled = true;
+                checkinBtn.textContent = 'Already Checked In';
+            } else {
+                checkinBtn.disabled = false;
+                checkinBtn.textContent = 'Check In';
+                checkinBtn.onclick = function() {
+                    // Close modal
+                    bootstrap.Modal.getInstance(document.getElementById('guestDetailsModal')).hide();
+                    
+                    // Open check-in tab and show guest info
+                    document.getElementById('checkin-tab').click();
+                    showGuestInfo(guest);
+                };
+            }
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('guestDetailsModal'));
+            modal.show();
+        }
+
+        // Delete guest
+        function deleteGuest(guestId) {
+            if (confirm(`Are you sure you want to delete guest ${guestId}?`)) {
+                if (isLocalStorageMode) {
+                    const guestIndex = guestList.findIndex(g => g.id === guestId);
+                    
+                    if (guestIndex !== -1) {
+                        guestList.splice(guestIndex, 1);
+                        saveGuestList();
+                        updateGuestListTable();
+                        updateStatistics();
+                        alert('Guest deleted successfully');
+                    } else {
+                        alert('Guest not found');
+                    }
+                } else {
+                    // Show loading indicator
+                    const row = document.querySelector(`tr[data-guest-id="${guestId}"]`);
+                    if (row) {
+                        row.innerHTML = `<td colspan="8" class="text-center"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Deleting...</td>`;
+                    }
+                    
+                    // Send to server - simplified fetch approach
+                    fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'deleteGuest',
+                            guestId: guestId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            const guestIndex = guestList.findIndex(g => g.id === guestId);
+                            if (guestIndex !== -1) {
+                                guestList.splice(guestIndex, 1);
+                            }
+                            updateGuestListTable();
+                            updateStatistics();
+                            alert('Guest deleted successfully');
+                        } else {
+                            alert('Error deleting guest: ' + data.message);
+                            updateGuestListTable(); // Refresh to remove loading indicator
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error connecting to server. Please try again.');
+                        updateGuestListTable(); // Refresh to remove loading indicator
+                    });
+                }
+            }
+        }
+
+        // Filter guest list
+        function filterGuestList() {
+            const searchValue = document.getElementById('guest-search').value.toLowerCase();
+            const tableRows = document.querySelectorAll('#guest-list-table tr');
+            
+            tableRows.forEach(row => {
+                // Skip header row
+                if (row.querySelector('td')) {
+                    const text = row.textContent.toLowerCase();
+                    
+                    if (text.includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Update recent check-ins
+        function updateRecentCheckins() {
+            const container = document.getElementById('recent-checkins');
+            
+            if (recentCheckins.length === 0) {
+                container.innerHTML = '<p class="text-muted fst-italic">No recent check-ins to display</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            recentCheckins.forEach(checkin => {
+                html += `
+                    <div class="card mb-2">
+                        <div class="card-body py-2 px-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0 fw-bold">${checkin.name}</h6>
+                                    <small class="text-muted">ID: ${checkin.id} | Additional guests: ${checkin.additionalGuests}</small>
+                                </div>
+                                <div class="text-muted">
+                                    <small>${checkin.time}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Export guest list to CSV
+        function exportGuestList() {
+            if (guestList.length === 0) {
+                alert('No guests to export');
+                return;
+            }
+            
+            // Create CSV content
+            let csvContent = 'Guest ID,Name,Email,Phone,Additional Guests,Company,Dietary Needs,Registration Date,Status,Check-in Time,Verified Count\n';
+            
+            guestList.forEach(guest => {
+                csvContent += `"${guest.id}","${guest.name}","${guest.email}","${guest.phone}","${guest.additionalGuests}","${guest.company || ''}","${guest.dietary || 'None'}","${guest.registrationDate}","${guest.status}","${guest.checkInTime || ''}","${guest.verifiedCount}"\n`;
+            });
+            
+            // Create download link
+            const encodedUri = encodeURI('data:text/csv;charset=utf-8,' + csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `guest-list-${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            
+            // Trigger download
+            link.click();
+            
+            // Clean up
+            document.body.removeChild(link);
+        }
+
+        // Print guest list
+        function printGuestList() {
+            window.print();
+        }
+
+        // Update statistics
+        function updateStatistics() {
+            // Calculate statistics
+            const totalRegistered = guestList.length;
+            const checkedIn = guestList.filter(guest => guest.status === 'Checked In').length;
+            const checkinRate = totalRegistered > 0 ? Math.round((checkedIn / totalRegistered) * 100) : 0;
+            
+            // Calculate total expected guests (including additional)
+            let totalExpected = 0;
+            guestList.forEach(guest => {
+                totalExpected += 1 + parseInt(guest.additionalGuests || 0);
+            });
+            
+            // Update dashboard
+            document.getElementById('total-registered').textContent = totalRegistered;
+            document.getElementById('total-checked-in').textContent = checkedIn;
+            document.getElementById('total-expected').textContent = totalExpected;
+            document.getElementById('check-in-rate').textContent = `${checkinRate}%`;
+            
+            // Update analytics tab
+            document.getElementById('analytics-registered').textContent = totalRegistered;
+            document.getElementById('analytics-checked-in').textContent = checkedIn;
+            document.getElementById('analytics-checked-in-percent').textContent = `${checkinRate}%`;
+            document.getElementById('analytics-no-shows').textContent = totalRegistered - checkedIn;
+            document.getElementById('analytics-no-shows-percent').textContent = `${totalRegistered > 0 ? Math.round(((totalRegistered - checkedIn) / totalRegistered) * 100) : 0}%`;
+            
+            // Calculate guests with additional guests
+            const withAdditional = guestList.filter(guest => parseInt(guest.additionalGuests) > 0).length;
+            document.getElementById('analytics-with-additional').textContent = withAdditional;
+            document.getElementById('analytics-with-additional-percent').textContent = `${totalRegistered > 0 ? Math.round((withAdditional / totalRegistered) * 100) : 0}%`;
+            
+            // Calculate guests with dietary restrictions
+            const withDietary = guestList.filter(guest => guest.dietary && guest.dietary !== 'none').length;
+            document.getElementById('analytics-dietary').textContent = withDietary;
+            document.getElementById('analytics-dietary-percent').textContent = `${totalRegistered > 0 ? Math.round((withDietary / totalRegistered) * 100) : 0}%`;
+        }
+
+        // Update analytics charts
+        function updateAnalyticsCharts() {
+            // Check-in progress chart
+            updateCheckinChart();
+            
+            // Guest breakdown chart
+            updateBreakdownChart();
+        }
+
+        // Update check-in progress chart
+        function updateCheckinChart() {
+            const ctx = document.getElementById('checkin-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (checkinChart) {
+                checkinChart.destroy();
+            }
+            
+            // Get check-in data
+            const totalRegistered = guestList.length;
+            const checkedIn = guestList.filter(guest => guest.status === 'Checked In').length;
+            
+            checkinChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Checked In', 'Not Checked In'],
+                    datasets: [{
+                        data: [checkedIn, totalRegistered - checkedIn],
+                        backgroundColor: ['#10b981', '#6c757d'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const percentage = Math.round((value / totalRegistered) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update guest breakdown chart
+        function updateBreakdownChart() {
+            const ctx = document.getElementById('guest-breakdown-chart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (breakdownChart) {
+                breakdownChart.destroy();
+            }
+            
+            // Calculate guest breakdown
+            const primaryGuests = guestList.length;
+            
+            // Sum additional guests
+            let additionalGuests = 0;
+            guestList.forEach(guest => {
+                additionalGuests += parseInt(guest.additionalGuests || 0);
+            });
+            
+            breakdownChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: ['Primary Guests', 'Additional Guests'],
+                    datasets: [{
+                        data: [primaryGuests, additionalGuests],
+                        backgroundColor: ['#3b82f6', '#8b5cf6'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
